@@ -1,390 +1,301 @@
-## Day17_180704
+## Day19_180706
+
+### 레일즈 프로젝트에서 ajax를 구현하기 위해서 다음과 같은 순서로 진행하자
+
+- 모든 동작을 포함하는 js코드를 작성한다
+- ajax코드를 작성한다 `$.ajax({})` 
+- url을 지정한다
+- 해당 url을 *config/routes.rb* 에서 controller#action을 지정한다.
+- controller#action을 작성한다
+- *app/view/controller_ 어쩌고 *
 
 
 
-- jQuery (요소 선택자, 이벤트 리스너)
-  - jQuery는 jQuery CDN으로 가져와야하는거지만, rails에서는 jQuery가 내장되어 있다.
-  - 하지만, rails 5.1버전 이상으로 사용하게 되면 어중간하게 설치가 되어있기때문에 다시 확인해야한다.
-  - `<%= link_to '로그아웃', user_session_destroy_path ,method: 'destroy', data: {confirm: "삭제하시겠습니까?"} %>` 여기에서 `data: {confirm: "삭제하시겠습니까?"} ` 이 부분.
-  - 
-
-```javascript
-> $
-ƒ ( selector, context ) {
-		// The jQuery object is actually just the init constructor 'enhanced'
-		// Need init if jQuery is called (just allow error to be thrown if not included)
-		return new jQuery…
-    
->$("css 선택자")
-jQuery.fn.init [prevObject: jQuery.fn.init(1), context: document, selector: "css 선택자"]		
-
->$(".btn") <= elementsByClassName
-jQuery.fn.init(3) [a.btn.btn-primary, a.btn.btn-primary, a.btn.btn-primary, prevObject: jQuery.fn.init(1), context: document, selector: ".btn"]
-
->$('button') <- HTML tag를 가져온다.
-
-> $('#title') <- 아이디는 유일하게 있어야하기때문에 아이디가 중복이라도 결과값은 한개만 나온다.
-jQuery.fn.init [h1#title, context: document, selector: "#title"]
 
 
+### 오늘 할 내용
+
+- 영화내용 30개 넣기
+  - faker gem 사용
+
+*seeds.rb*
+
+```ruby
+
+genres = ["Horror", "Thriller", "Action", "Drama","Comedy", "Romance", "SF", "Adventure", "Fantasy"]
+
+images = %w( http://img.khan.co.kr/news/2017/10/31/l_2017103101003415200280211.jpg 
+             https://t1.daumcdn.net/thumb/R1280x0/?fname=http://t1.daumcdn.net/brunch/service/user/Ji8/image/XYQ6knUsDYi7uTEoOUWrT09K4bs.jpg
+             http://imgmovie.naver.com/mdi/mi/0733/73372_P31_161237.jpg
+             http://file.thisisgame.com/upload/tboard/user/2016/07/08/20160708061954_5657.jpg
+             http://img.danawa.com/images/descFiles/4/402/3401557_1497838111988.jpeg
+             https://i.pinimg.com/originals/df/70/70/df70702365aa41e2b6a6b778d1065d2d.jpg
+             http://thumb.zumst.com/530x0/
+             http://static.news.zumst.com/images/37/2015/04/28/63dd6dd32b8448c9a3b1e2fb495e1244.jpg
+             http://img.insight.co.kr/static/2018/05/24/700/k3p442sg6754iibr1hlw.jpg
+             http://www.typographyseoul.com/images/newsEdit/15030516593088077_TS.png )
+
+User.create(email: "aa@aa.aa", password: "123123", password_confirmation: "123123")
+30.times do
+            Movie.create(title: Faker::Movie.quote, 
+                        description: Faker::Lorem.paragraph, 
+                        genre: genres.sample, 
+                        director: Faker::HarryPotter.character, 
+                        actor: Faker::FunnyName.two_word_name, 
+                        remote_image_path_url: images.sample,
+                        user_id: 1)
+end
 ```
 
-jQuery를 사용한 이벤트 적용 방식
+`binn02:~/watcha_app (master) $ rake db:reset` 
 
+- hashtag
+  - input창에 글자를 한 글자 입력(이벤트)할 때마다(이벤트리스너)
+  - server로 해당글자를 검색하는 요청을 보내고
+  - 응답으로 날아온 영화제목 리스트를 화면에 보여준다
 
-```javascript
-$('.btn').mouseover(function() {
-    console.log("건들이지마이야이야~");
-});
+*index.html.erb*
 
-$('.btn').on('mouseover', function() {
-    console.log("건들이지 말랬지 ㅡㅡ");
-});
-```
+```ruby
+<input type="text" class="form-control movie-title">
+<div class="recomm-movie d-flex justify-content-start">
 
-> 두번째 방식을 가장 많이 쓰는데 이벤트를 늘려갈수있기 때문에! 많이 사용한다.
-
-
-
-- 마우스가 버튼위에 올라갔을때, 버튼에 있는 btn-primary클래스를 삭제하고, btn-danger 클래스를 준다. 버튼에서 마우스가 내려왔을 때, 다시 btn-danger 클래스를 삭제하고 btn-primary 클래스를 추가한다.
-  - 여러개의 이벤트 등록하기
-  - 요소에 class를 넣고 빼는 jQuery Function을 찾기. => .addClass / .removeClass || 이둘을 합쳐져 있는게 .toogleClass
-
-```javascript
-btn.on('mouseenter mouseout', function() {
-    //두개의 이벤트 리스너, 한개의 이벤트 핸들러
-    
-    
-btn.on('mouseenter mouseout', function() {
-    btn.removeClass("btn-primary").addClass("btn-danger");
-})
-    // 이렇게 하면 btn-danger 로 변하고 끝. 근데 계속 변화시키고싶으니까 danger이 있을때 다시 primary로 바꿔주면 되겠지
-    // .hasClass()로 해당 클래스를 찾아주자
-
-    
-    
-btn.on('mouseenter mouseout', function(){
-    if (btn.hasClass('btn-danger')) {btn.removeClass('btn-danger').addClass('btn-primary');} else { btn.removeClass('btn-primary').addClass('btn-danger'); }});
-    
-    
-    btn.on('mouseenter mouseout', function(){
-    $(this).toggleClass('btn-danger').toggleClass('btn-primary');
-});
-```
-
-> $(this) : 이벤트가 발생한 바로 그 대상을 지칭.
->
-> console.dir(this); -> 바로 html요소가 뜬다.
-> console.dir($(this)); -> jQuery 요소! jQuery메소드를 사용할땐 이렇게 jQuery로 감싸주어야 한다.
-
-> toggle : 있으면 빠지고, 없으면 넣어주니까
-
-
-
-- 버튼에 마우스가 오버되었을때, 상단에 있는 이미지의 속성에 style 속성과 `width: 100px;`의 속성값을 부여한다.
-
-```javascript
-btn.on('mouseover',function() {
-    $('img').attr('style', 'width: 100px;'); }); 
-// 속성값 부여
-
-$('img').attr('style');
- "width: 100px;"
-// 속성값 가져오기 (1개만.)
-```
-
-
-
-- 텍스트 바꾸기 .text()
-
-  - return <- 인자가 있는경우
-  - set <- 인자가 없는경우에는 들어있는 innertext속성을 꺼내온다.
-
-  > $(this).siblings().find("card-title").text("...")
-
-
-
-- 버튼(요소)에 마우스가 오버(이벤트)됬을 때(이벤트 리스너), 이벤트가 발생한 버튼($(this))과 같은 수준(같은 부모를 갖는: siblings())이 아닌 상위 수준(parent()) 에 있는  요소 중에서 `.card-title`의 속성을 가진 친구를 찾아(find()) 텍스트를 변경(text())시킨다.
-
-```javascript
-btn.on('mouseover', function() {
-   $(this).parent().find('.card-title').text("건들이는거 노노");
-});
-
-// find()는 하위수준에서 찾기 때문에 siblings가 아닌 parent()를 사용하여 상위수준으로 올려서 찾아야한다.
-```
-
-
-
-### 놀리기 텍스트 변환기(얼레리 꼴레리)
-
-*index.html*
-
-```html
-<textarea id="input" placeholder="변환텍스트를 입력해주세요"></textarea>
-<button class="translate">바꿔줘</button>
-<h3></h3>
-```
-
-- input에 들어있는 text중에서 '관리' -> '고나리' 로, '확인' -> '호가인' 로 '훤하다' -> '허누하다' 의 방식으로 텍스를 오타로 바꾸는 이벤트핸들러 작성하기
-  - ㅎ ㅜ ㅓ ㄴ 에서 두번째꺼랑 세번째꺼 바꿔주면 된다.
-  - 1. 분해한 글자의 4번째요소가 있는지
-    2.  2번째 3번째 요소가 모음인지
-  - 분리 -> 순서바꾸기 -> 합치기
-
-- https://github.com/e-/Hangul.js 에서 라이브러리를 받아서 자음과 모음을 분리하고 다시 단어로 합치는 기능을 살펴보기.
-- `String.split('')`: `''`안에 있는것을 기준으로 문자열을 잘라준다. (return type: 배열)
-- `.map(function(el){ })` : 배열을 순회하면서 하나의 요소마다 function을 실행시킴 (el : 순회하는 각 요소 ( 가변수 ), return type : 새로운 배열)
-- `Array.join('')` : 배열에 들어있는 내용들을 `''`안에 있는 내용을 기준으로 합쳐준다.
-
-
-
-#### 진행
-
-1. 아톰을 킨다.
-2. html양식을 완료한다 
-3. Hangual.js을 그 폴더에 넣는다.
-4. jQuery CDN을 설치한다
-
-```html
-
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>얼레리 꼴레리</title>
-    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
-  </head>
-  <body>
-    <h1> 놀리기 변환 </h1>
-    <textarea id="input" placeholder="변환텍스트를 입력해주세요"></textarea><br/>
-    <button class="translate">바꿔줘</button>
-    <h3></h3>
-    <script src="./hangul.js" type="text/javascript"></script>
-    <script type="text/javascript">
-      
-    </script>
-  </body>
-</html>
-```
-
-> ​    <script scr="./translate.js" type="text/javascript"></script> 하면 스크립트 내용을 따로 뺄수있다.
-
-
-
-5. textarea에 있는 내용물을 가지고 오는 코드
-
-`    $('#input').val();` : 인자가 없을때는 내용물을 꺼내고, 인자가 있을때는 내용물을 인자값으로 집어넣고.
-
-6. 버튼에 이벤트리스너(click)를 달아주고, 핸들러에는 1번에서 작성한 코드를 넣는다.
-
-```html
-    <script type="text/javascript">
-      $('.translate').on('click', function() {
-        var input = $('#input').val();
-        console.log(input); 
+</div>
+...  
+<script>
+    $(document).on('ready', function(){
+      $('.movie-title').on('keyup',function(){
+        var title = $(this).val();
+        $('.recomm-movie').html(`<a>${$(this).val()}</a>`);
+        $.ajax({
+          url: '/serach_movie',
+          data: {
+            q: title
+          }
+        })
       })
-    </script>
+    });
+  </script>
 ```
 
-7. 6번 코드의 결과물을 한글자씩 분해해서 배열로 만들어준다.
-
-`console.log(Hangul.disassemble(input));`
-
-8. 분해한 글자의 4번째요소가 있는지 && 2번째 3번째 요소가 모음인지
-9. 2번째 3번재 모음의위치를 바꾸어준다.
-10. 결과물로 나온 배열을 문자열로 이어준다(join 사용)
-
-*translate.js*
-
-```javascript
-function translate(str){
-  return str.split('').map(function(el){ //map : 하나씩 돌아가면서 조작
-    // el. 을 가지고 조작합니다
-    var d = Hangul.disassemble(el);
-    console.log(d)
-    if(d[3] && Hangul.isVowel(d[1]) && Hangul.isVowel(d[2])){
-    var temp = d[2];
-    d[2] = d[3];
-    d[3] = temp;
-
-    }
-      return Hangul.assemble(d);
-    }).join('');
-}
-
-```
-
-11. 결과물을 출력해줄 요소를 찾는다. 
-12. 요소에 결과물을 출력한다. -> 다음 결과물을 h2태그에 배치한다.
-
-```html
-<script src="./translate.js"></script>
-<script type="text/javascript">
-      $('.translate').on('click', function() {
-        var input = $('#input').val();
-	    var result = translate(input);
-        $('h3').text(result);
-        console.log(result);
-      })
-</script>
-```
-
-
-
-### Ajax
-
-translate.js 에 있는 Function을 사용해보았다. 그렇다면 서버에 있는 액션은 어떻게 사용해야할까?
-
-client < - > server (-> res 즉, 응답방식이 HTML이였을땐 화면전환이 있었다.) rails는 임의로 정해주지 않는한 req 와 res 의 파일은 같은 형식을 띈다. 즉, javascript로 응답을 보내면 페이지 전환이 있는것이 아니라, 어떠한 액션! 을 넣어주는것. 화면전환없이 서버에 요청을 보내고, 응답을 받을수있기 때문에 많이 사용한다.
-
-즉, 서버에 요청을 javascript 타입으로 보내는것이 AJAX라고 할수있다.
-
->  rails 에서는 어느 메소드(액션)으로 보낼지 (=> routes )
->
-> Ajax 에서 어디로 어떻게 보낼지 (=> url , Http method)
-
-```javascript
-$.ajax({
-    url: 어느주소로 요청을 보낼지,
-    method: 어떠한 HTTP method로 요청을 보낼지,
-    data: {
-    k: v 어떤 값을 함께 보낼지 (k,v로 구성),
-   	// 서버에서는 params[k] => v
-    
-	}
-}
-```
-
-
-
-
-
-- 좋아요 옵션 만들기
-- 유저와 영화의 좋아요관계는 다대다 이므로 => 
-  1. 모델생성
-
-`binn02:~/watcha_app (master) $ rails g model like`
-
-*~/watcha_app/db/migrate/20180704061215_create_likes.rb.rb*
+*routes.rb* 
 
 ```ruby
-      t.integer :user_id
-      t.integer :movie_id
+ collection do
+      get '/search_movie'=> "movies#search_movie"
+    end
 ```
 
-2. 관계설정
-
-*like.rb*
+*movie_controller.rb*
 
 ```ruby
-    belongs_to :user
-    belongs_to :movie
-```
-
-`movie.rb` 와` user.rb` 에서는 `has_many :likes` 랑     `has_many :users, through: :likes`해야하는데 이미 유저랑 무비가 다대다니까 중복이되쟈나
-
-<< 해결방법 >>
-
-1. 작성자이름만 movie가 갖게하여 다대다를 끊어주는거
-2. 다대다 관계를 느슨하게 > movie.likes.count 로 세어주기만 하는 방법이 있어
-
-
-
-1번 방법을 사용하였다.
-
-*user.rb*
-
-```ruby
-  has_many :likes
-  has_many :movies, through: :likes
-```
-
-*movie.rb*
-
-```ruby
-    has_many :likes
-    has_many :users, through: :likes
-```
-
-
-
-script는 동적으로 불러와진다. 특정 버튼에 이벤트를 넣을때,  페이지가 완전히 다 로딩되었는지 알려주는 코드가 필요하다.
-
-*show.html.erb*
-
-```ruby
+ before_action :js_authenticate_user!, only: [:like_movie, :create_comment, :destroy_comment, :update_comment]
+  before_action :authenticate_user!, except: [:index, :show, :search_movie]
 ...
-    
-<script>
-    $(document).on('ready',function(){
-        
-    });
-</script>
-
+  def search_movie
+    @movies = Movie.where("title LIKE ?", "#{params[:q]}%")
+  end
 ```
 
-> 문서가 다 로드됬을때 이벤트를 사용하겠다.	
-
-1. 좋아요 버튼을 눌렀을때
+*search_movie*
 
 ```ruby
-<script>
-    $(document).on('ready',function(){
-        $('.like').on('click', function(){
-            
-        })
-    });
-</script>
+console.log("찾음");
+ $('.recomm-movie').html(`
+  <% @movies.each do |movie| %>    
+ <span class="badge badge-primary"><%= movie.title %></span>&nbsp;&nbsp;
+ <%end%>
+ `);
 ```
 
+> &nbsp;&nbsp;`&nbsp;&nbsp;` : 얘는 자동완성검색어 사이에 공백을 주기 위해서
+>
+> 문제 : 공백일 경우 모든 영화제목이 다 나온다.
+>
+> 그러니 *movie_controller.rb *에 search_movie에 분기를 주자.
 
-
-2. 서버에 요청을 보낸다. (현재 유저와 현재 보고있는 이 영화가 좋다고 하는 요청)
+*movie_controller.rb*
 
 ```ruby
-<script>
-    $(document).on('ready',function(){
-        $('.like').on('click', function(){
-            console.log("like~!") // 확인용
-            $.ajax({
-               url: '/likes' 
-            });
+ def search_movie
+    if params[:q].strip.empty? # 완전히 빈 공백일 경우를 위해
+      render nothing: true 
+      # 아무응답도 해주지 말라 라는 뜻.
+    else
+    @movies = Movie.where("title LIKE ?", "#{params[:q]}%")
+    end
+  end
+```
+
+> 문자열을 입력후 한개의 문자열 제외하고 전부 지웠을때에는 결과가 남아있다. 그렇기 때문에 keyup할때 모두 지워지는코드를 index의 자바스크립트에 추가해주자
+
+*index.html.erb*
+
+```ruby
+ <script>
+    $(document).on('ready', function(){
+      $('.movie-title').on('keyup',function(){
+        $('.recomm-movie').html('');
+          
+        var title = $(this).val();
+        $.ajax({
+          url: '/movies/search_movie',
+          data: {
+            q: title
+          }
         })
+      })
     });
-</script>
-
+  </script>
 ```
 
-*routes.rb* 에  ` get '/likes' => 'movies#like_movie'` 해주면 이런 에러가 뜬다
+> 하지만 지울때마다 넘 깜빡거려서 아주 거슬립니다
+>
+> 이걸 어떻게 해결할꼬니?
+>
+> respond_to do 사용
+>
+> 요청이 오는 방식에 따라 응답을 다르게 주자~ 라는 뜻이래.
 
-AbstractController::ActionNotFound (The action 'like_movie' could not be found for MoviesController): 
+*movie_controller.rb*
 
-*movie_controller* 에 `   def like_movie end` 써준다. 이거와 같은이름의 `like_movie.js` 에서 alert하면 저 def가 실행될때 자동으로 같은이름의 자바스크립트도 읽을수있다.
-
-하지만, 로그인하지않고 좋아요버튼을 누르면 401에러가 뜬다. -> 해결하기 위해서 filter를 설정
-
-*movie_controller* 에서 `  before_action :js_authenticate_user!, only: [:like_movie]` 쓰기위해서!! *application_controller* 에서 `s_authenticate_user!` 를 설정했다.
-
-1. 서버가 할 일
-2. 응답이 오면 좋아요 버튼의 텍스트를 좋아요 취소로 바꾸고 `btn-info` -> `btn-warning text-whitle`로 바꿔준다.
-
-```javascript
-alert("좋아요 설정되쩡!");
-
-
-//좋아요가 취소된 경우
-// 좋아요 취소버튼 -> 좋아요 버튼으로 바꿔준다.
-if (<%= @like.frozen? %>) {
-$('.like').text("좋아요").toggleClass("btn-info btn-warning text-white");
-
-
-}else{
-//좋아요가 새로눌린 경우
-// 좋아요 버튼 -> 좋아요 취소버튼으루~!~!
-
-$('.like').text("좋아요 취소").toggleClass("btn-info btn-warning text-white");
-}
+```ruby
+def search_movie
+    respond_to do |format|  # 분기 : 서로 다른 자바스크립트 파일을 보내줄경우
+      if params[:q].strip.empty?
+      format.js {render 'no_content'}
+      # 아무응답도 해주지 말라 라는 뜻.
+     else
+       @movies = Movie.where("title LIKE ?", "#{params[:q]}%")
+        format.js {render 'search_movie'}
+      end
+    end
+end
 ```
+
+> format.html
+>
+> format.json
+>
+> 이런 형태로 사용가능합니다.
+
+*index.html.erb*
+
+```ruby
+<div class="recomm-movie d-flex justify-content-start row">
+```
+
+> 뒤에 row를 주어 끝까지 가지않고 끊어서 다음행으로 넘어갈수있도록 해주자.
+
+
+
+- 제목중복, 아이디 중복도 이런 방식으로 진행된다.
+
+  - change는 검색어가 바뀌고 엔터를 쳤을때 결과가 나오도록.
+
+  > ```ruby
+  >  <script>
+  >     $(document).on('ready', function(){
+  >       $('.movie-title').on('change',function(){
+  >         $('.recomm-movie').html('');
+  >           
+  >         var title = $(this).val();
+  >         $.ajax({
+  >           url: '/movies/search_movie',
+  >           data: {
+  >             q: title
+  >           }
+  >         })
+  >       })
+  >     });
+  >   </script>
+  > ```
+  >
+  > 
+
+
+
+### Kaminari ( pagination )
+
+https://github.com/kaminari/kaminari
+
+To fetch the 7th page of users (default `per_page` is 25) 
+
+- gem 설치후 `bundle install`
+- 한 페이지에 25개씩 표시되도록 *movies_controller.rb*에 설정
+
+```ruby
+  def index
+    @movies = Movie.page(params[:page])
+  end
+```
+
+- movie.rb 에서 한 페이지에서 볼수있는 갯수는 8개로 설정.
+
+  ```ruby
+   paginates_per 8
+  ```
+
+- https://my-second-rails-app-binn02.c9users.io/movies?page=3 으로 3page로 이동가능하다
+
+```console
+  Rendering movies/index.html.erb within layouts/application
+  Movie Load (0.3ms)  SELECT  "movies".* FROM "movies" LIMIT ? OFFSET ?  [["LIMIT", 8], ["OFFSET", 16]]
+  Rendered movies/index.html.erb within layouts/application (4.8ms)
+Completed 200 OK in 28ms (Views: 26.6ms | ActiveRecord: 0.3ms)
+```
+
+> LIMIT : 한 페이지에 보여주는 갯수
+>
+> OFFSET : 앞에서 건너뛰는 개수
+
+[controller와 view][https://github.com/kaminari/kaminari#controllers]
+
+*index.html.erb*
+
+```ruby
+<%= paginate @movies %>
+```
+
+> ### Ajax Links (crazy simple, but works perfectly!)
+>
+> ```
+> <%= paginate @users, remote: true %>
+> ```
+
+> ```console
+> Started GET "/?page=4" for 222.107.238.15 at 2018-07-06 04:21:25 +0000
+> Cannot render console from 222.107.238.15! Allowed networks: 127.0.0.1, ::1, 127.0.0.0/127.255.255.255
+> Processing by MoviesController#index as JS
+>   Parameters: {"page"=>"4"}
+>   Rendering movies/index.html.erb within layouts/application
+>   Movie Load (0.3ms)  SELECT  "movies".* FROM "movies" LIMIT ? OFFSET ?  [["LIMIT", 8], ["OFFSET", 24]]
+>   Rendered movies/index.html.erb within layouts/application (127.3ms)
+> Completed 200 OK in 157ms (Views: 152.0ms | ActiveRecord: 0.3ms)
+> 
+> ```
+>
+> 이렇게 응답이 오니까 우리가 이걸 *movies_controller.rb* 에서 분기문으로 처리가능
+>
+> ```ruby
+>    respond_to do |format|
+>        format.html
+>        format.js
+>     end
+> ```
+>
+> 이런식으로 !
+
+근데 pagination이 마음에 안들어서 bootstrap 적용하고 싶을때!
+
+- https://github.com/KamilDzierbicki/bootstrap4-kaminari-views
+- *index.html.erb*
+
+```ruby
+<%= paginate @movies, theme: 'twitter-bootstrap-4' %>
+```
+
+https://getbootstrap.com/docs/4.1/components/carousel/#slides-only
 
 
 
