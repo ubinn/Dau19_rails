@@ -7,7 +7,7 @@
 - url을 지정한다
 - 해당 url을 *config/routes.rb* 에서 controller#action을 지정한다.
 - controller#action을 작성한다
-- *app/view/controller_ 어쩌고 *
+- *app/view/controller_ 어쩌고*
 
 
 
